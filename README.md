@@ -1,8 +1,11 @@
-# vmd
+# vmd for TODO lists
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
 [![Downloads][downloads-image]][downloads-url]
 [![js-standard-style][standard-image]][standard-url]
+
+## Why fork?
+This fork of vmd adds special processing for my particular TODO list markdown file. This includes default styling, and a few preprocessing steps.
 
 Preview markdown files in a separate window. Markdown is formatted exactly the
 same as on GitHub.
