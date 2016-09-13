@@ -3,6 +3,15 @@ const highlightjs = require('highlight.js')
 
 const emojiRegex = /:([A-Za-z0-9_\-\+\xff]+?):/g
 const listItemRegex = /^\[(x|\s)\]\s*(.+)$/
+const doneItemRegex = /\*(.*?)\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/g
+const doneLabelRegex = /Done/
+
+// Replace single list space newlines with 2 newlines, so that markdown correctly renders it
+const singleListSpaceRegex = /(\*.*)\n{2}(\*)/gm
+
+// Match any headers (that aren't dates) that don't have anything until the next header.
+// Tomorrow is special, because it is specified as a header with ------ underneath.
+const emptyHeaderRegex = /(#+\s*[^/\n]*\s+)(#+|Tomorrow)/gm
 
 function escapeUnderscore (str) {
   return str.replace(/[_]/g, '\xff')
@@ -24,13 +33,40 @@ function unescapeEmoji (str) {
   })
 }
 
+// Preprocess text before going into marked
+function preprocess (src) {
+  // Remove headers with no bodies
+  let newSrc = src.replace(emptyHeaderRegex, function (match, header, rest) {
+    return rest
+  })
+
+  // Replace single spaces in lists
+  newSrc = newSrc.replace(singleListSpaceRegex, function (match, before, after) {
+    return before + '\n\n\n' + after
+  })
+
+  // Add style to timestamps and checkboxes
+  newSrc = newSrc.replace(doneItemRegex, function (match, item, timestamp) {
+    return '* [x] ' + item + '<span class="timestamp">' + timestamp + '<span/>'
+  })
+
+  return newSrc
+}
+
 var renderer = new marked.Renderer()
 
 renderer.text = function (text) {
-  return text.replace(emojiRegex, function (match, emojiname) {
+  let newText = text.replace(emojiRegex, function (match, emojiname) {
     emojiname = unescapeUnderscore(emojiname)
     return '<img alt=":' + emojiname + ':" src="emoji://' + emojiname + '" />'
   })
+
+  // Mark done headers so that we can style their lists
+  newText = newText.replace(doneLabelRegex, function (match) {
+    return '<h4 class="done-list">Done</h4>'
+  })
+
+  return newText
 }
 
 var originalListItemRenderer = marked.Renderer.prototype.listitem
@@ -71,5 +107,7 @@ marked.setOptions({
 })
 
 module.exports = function (src) {
-  return marked(src)
+  preprocessedSrc = preprocess(src)
+
+  return marked(preprocessedSrc)
 }
