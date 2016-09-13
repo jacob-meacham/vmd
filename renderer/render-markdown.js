@@ -4,7 +4,7 @@ const highlightjs = require('highlight.js')
 const emojiRegex = /:([A-Za-z0-9_\-\+\xff]+?):/g
 const listItemRegex = /^\[(x|\s)\]\s*(.+)$/
 const doneItemRegex = /\*(.*?)\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/g
-const doneLabelRegex = /Done/
+const doneLabelRegex = /^Done$/
 
 // Replace single list space newlines with 2 newlines, so that markdown correctly renders it
 const singleListSpaceRegex = /(\*.*)\n{2}(\*)/gm
