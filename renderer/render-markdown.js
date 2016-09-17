@@ -2,9 +2,10 @@ const marked = require('marked')
 const highlightjs = require('highlight.js')
 
 const emojiRegex = /:([A-Za-z0-9_\-\+\xff]+?):/g
-const listItemRegex = /^\[(x|\s)\]\s*(.+)$/
-const doneItemRegex = /\*(.*?)\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/g
+const listItemRegex = /^\[(x|\s)\]\s*(.+)($|(<ul>(.|\n)*$))/
+const doneItemRegex = /(\s*(\*|\+|-)\s+)(.*?)\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/g
 const doneLabelRegex = /^Done$/
+const partialLabelRegex = /^Partial$/
 
 // Replace single list space newlines with 2 newlines, so that markdown correctly renders it
 const singleListSpaceRegex = /(\*.*)\n{2}(\*)/gm
@@ -46,8 +47,8 @@ function preprocess (src) {
   })
 
   // Add style to timestamps and checkboxes
-  newSrc = newSrc.replace(doneItemRegex, function (match, item, timestamp) {
-    return '* [x] ' + item + '<span class="timestamp">' + timestamp + '<span/>'
+  newSrc = newSrc.replace(doneItemRegex, function (match, bulletWithSpace, bullet, item, timestamp) {
+    return bulletWithSpace + ' [x] ' + item + '<span class="timestamp">' + timestamp + '</span>'
   })
 
   return newSrc
@@ -61,9 +62,13 @@ renderer.text = function (text) {
     return '<img alt=":' + emojiname + ':" src="emoji://' + emojiname + '" />'
   })
 
-  // Mark done headers so that we can style their lists
+  // Mark done/partial headers so that we can style their lists
   newText = newText.replace(doneLabelRegex, function (match) {
     return '<h4 class="done-list">Done</h4>'
+  })
+
+  newText = newText.replace(partialLabelRegex, function (match) {
+    return '<h4 class="partial-list">Partial</h4>'
   })
 
   return newText
@@ -74,10 +79,15 @@ var originalListItemRenderer = marked.Renderer.prototype.listitem
 renderer.listitem = function (text) {
   var match = listItemRegex.exec(text)
   if (match) {
+    var sublist = match[3]
     var label = match[2]
     var checked = match[1] === 'x' ? 'checked' : ''
 
     text = '<label><input type="checkbox" class="task-list-item-checkbox" disabled ' + checked + ' /> ' + label + '</label>'
+
+    if (sublist) {
+      text += sublist
+    }
 
     return '<li class="task-list-item">' + text + '</li>'
   }
