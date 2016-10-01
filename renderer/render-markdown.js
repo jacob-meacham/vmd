@@ -4,6 +4,7 @@ const highlightjs = require('highlight.js')
 const emojiRegex = /:([A-Za-z0-9_\-\+\xff]+?):/g
 const listItemRegex = /^\[(x|\s)\]\s*(.+)($|(<ul>(.|\n)*$))/
 const doneItemRegex = /(\s*(\*|\+|-)\s+)(.*?)\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/g
+const timestampRegex = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/g
 const doneLabelRegex = /^Done$/
 const partialLabelRegex = /^Partial$/
 
@@ -46,9 +47,14 @@ function preprocess (src) {
     return before + '\n\n\n' + after
   })
 
-  // Add style to timestamps and checkboxes
-  newSrc = newSrc.replace(doneItemRegex, function (match, bulletWithSpace, bullet, item, timestamp) {
-    return bulletWithSpace + ' [x] ' + item + '<span class="timestamp">' + timestamp + '</span>'
+  // Add style to timestamps
+  newSrc = newSrc.replace(timestampRegex, function (match, timestamp) {
+    return '<span class="timestamp">' + timestamp + '</span>'
+  })
+
+  // Add style to checkboxes
+  newSrc = newSrc.replace(doneItemRegex, function (match, bulletWithSpace, bullet, item) {
+    return bulletWithSpace + ' [x] ' + item
   })
 
   return newSrc
